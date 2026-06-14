@@ -1,27 +1,39 @@
-import fs from 'fs'
-import path from 'path'
+import { MongoClient, Db } from 'mongodb'
 
-const dataDir = path.join(process.cwd(), 'data')
-
-export function readJSON<T>(file: string): T {
-  const filePath = path.join(dataDir, `${file}.json`)
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(getDefault(file), null, 2))
-  }
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+const uri = process.env.MONGODB_URI
+if (!uri) {
+  throw new Error('Missing MONGODB_URI environment variable')
 }
 
-export function writeJSON(file: string, data: unknown): void {
-  const filePath = path.join(dataDir, `${file}.json`)
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
+const dbName = process.env.MONGODB_DB || 'devboard'
+
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<MongoClient> | undefined
 }
 
-function getDefault(file: string) {
-  const defaults: Record<string, unknown> = {
-    projects: { projects: [] },
-    modules:  { modules: [] },
-    tasks:    { tasks: [] },
-    docs:     { docs: [] },
+const client = new MongoClient(uri)
+const clientPromise = global._mongoClientPromise || client.connect()
+if (!global._mongoClientPromise) global._mongoClientPromise = clientPromise
+
+export async function readJSON<T>(file: 'projects' | 'modules' | 'tasks' | 'docs'): Promise<T> {
+  const db = await getDb()
+  const collection = db.collection(file)
+  const items = await collection.find().toArray()
+  return { [file]: items } as unknown as T
+}
+
+export async function writeJSON(file: 'projects' | 'modules' | 'tasks' | 'docs', data: unknown): Promise<void> {
+  const db = await getDb()
+  const collection = db.collection(file)
+  const docs = ((data as any)[file] ?? []) as any[]
+  await collection.deleteMany({})
+  if (docs.length > 0) {
+    await collection.insertMany(docs)
   }
-  return defaults[file] ?? {}
+}
+
+async function getDb(): Promise<Db> {
+  const client = await clientPromise
+  return client.db(dbName)
 }

@@ -8,14 +8,14 @@ interface TasksData { tasks: Task[] }
 
 export async function GET(req: NextRequest, { params }: { params: { moduleId: string } }) {
   if (!validatePin(req)) return unauthorizedResponse()
-  const { tasks } = readJSON<TasksData>('tasks')
+  const { tasks } = await readJSON<TasksData>('tasks')
   return Response.json({ tasks: tasks.filter(t => t.module_id === params.moduleId) })
 }
 
 export async function POST(req: NextRequest, { params }: { params: { moduleId: string } }) {
   if (!validatePin(req)) return unauthorizedResponse()
   const body = await req.json()
-  const data = readJSON<TasksData>('tasks')
+  const data = await readJSON<TasksData>('tasks')
   const existing = data.tasks.filter(t => t.module_id === params.moduleId && t.status === (body.status || 'TODO'))
   const task: Task = {
     id: `task_${uuid().slice(0, 8)}`,
@@ -30,6 +30,6 @@ export async function POST(req: NextRequest, { params }: { params: { moduleId: s
     updated_at: new Date().toISOString(),
   }
   data.tasks.push(task)
-  writeJSON('tasks', data)
+  await writeJSON('tasks', data)
   return Response.json({ task }, { status: 201 })
 }

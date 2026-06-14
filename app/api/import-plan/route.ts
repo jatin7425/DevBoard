@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
   const parsed = parseMarkdown(stripped)
   if (!parsed.projectName) return Response.json({ error: 'Could not parse project name from markdown' }, { status: 422 })
 
-  const projectsData = readJSON<ProjectsData>('projects')
-  const modulesData  = readJSON<ModulesData>('modules')
-  const tasksData    = readJSON<TasksData>('tasks')
-  const docsData     = readJSON<DocsData>('docs')
+  const projectsData = await readJSON<ProjectsData>('projects')
+  const modulesData  = await readJSON<ModulesData>('modules')
+  const tasksData    = await readJSON<TasksData>('tasks')
+  const docsData     = await readJSON<DocsData>('docs')
 
   const summary = { projectCreated: false, modulesCreated: 0, tasksCreated: 0, docsCreated: 0, projectName: parsed.projectName }
 
@@ -172,10 +172,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  writeJSON('projects', projectsData)
-  writeJSON('modules',  modulesData)
-  writeJSON('tasks',    tasksData)
-  writeJSON('docs',     docsData)
+  await writeJSON('projects', projectsData)
+  await writeJSON('modules',  modulesData)
+  await writeJSON('tasks',    tasksData)
+  await writeJSON('docs',     docsData)
 
   return Response.json({ success: true, summary })
 }

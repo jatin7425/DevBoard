@@ -8,14 +8,14 @@ interface DocsData { docs: Doc[] }
 
 export async function GET(req: NextRequest, { params }: { params: { moduleId: string } }) {
   if (!validatePin(req)) return unauthorizedResponse()
-  const { docs } = readJSON<DocsData>('docs')
+  const { docs } = await readJSON<DocsData>('docs')
   return Response.json({ docs: docs.filter(d => d.module_id === params.moduleId) })
 }
 
 export async function POST(req: NextRequest, { params }: { params: { moduleId: string } }) {
   if (!validatePin(req)) return unauthorizedResponse()
   const body = await req.json()
-  const data = readJSON<DocsData>('docs')
+  const data = await readJSON<DocsData>('docs')
   const doc: Doc = {
     id: `doc_${uuid().slice(0, 8)}`,
     module_id: params.moduleId,
@@ -25,6 +25,6 @@ export async function POST(req: NextRequest, { params }: { params: { moduleId: s
     updated_at: new Date().toISOString(),
   }
   data.docs.push(doc)
-  writeJSON('docs', data)
+  await writeJSON('docs', data)
   return Response.json({ doc }, { status: 201 })
 }

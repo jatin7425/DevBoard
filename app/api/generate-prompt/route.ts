@@ -14,13 +14,13 @@ export async function POST(req: NextRequest) {
   const { projectId } = await req.json()
   if (!projectId) return Response.json({ error: 'projectId required' }, { status: 400 })
 
-  const { projects } = readJSON<ProjectsData>('projects')
+  const { projects } = await readJSON<ProjectsData>('projects')
   const project = projects.find(p => p.id === projectId)
   if (!project) return Response.json({ error: 'Project not found' }, { status: 404 })
 
-  const { modules } = readJSON<ModulesData>('modules')
-  const { tasks }   = readJSON<TasksData>('tasks')
-  const { docs }    = readJSON<DocsData>('docs')
+  const { modules } = await readJSON<ModulesData>('modules')
+  const { tasks }   = await readJSON<TasksData>('tasks')
+  const { docs }    = await readJSON<DocsData>('docs')
 
   const projectModules = modules.filter(m => m.project_id === projectId)
 

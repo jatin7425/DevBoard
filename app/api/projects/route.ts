@@ -8,14 +8,14 @@ interface ProjectsData { projects: Project[] }
 
 export async function GET(req: NextRequest) {
   if (!validatePin(req)) return unauthorizedResponse()
-  const { projects } = readJSON<ProjectsData>('projects')
+  const { projects } = await readJSON<ProjectsData>('projects')
   return Response.json({ projects })
 }
 
 export async function POST(req: NextRequest) {
   if (!validatePin(req)) return unauthorizedResponse()
   const body = await req.json()
-  const data = readJSON<ProjectsData>('projects')
+  const data = await readJSON<ProjectsData>('projects')
   const project: Project = {
     id: `proj_${uuid().slice(0, 8)}`,
     name: body.name,
@@ -25,6 +25,6 @@ export async function POST(req: NextRequest) {
     updated_at: new Date().toISOString(),
   }
   data.projects.push(project)
-  writeJSON('projects', data)
+  await writeJSON('projects', data)
   return Response.json({ project }, { status: 201 })
 }
