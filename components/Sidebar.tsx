@@ -240,7 +240,7 @@ export function Sidebar({ view, currentProject, currentModule, nav, onCmdK, onNe
       <div className="sb-scroll">
         <div className="nav-sec">
           {navItems.map(it => (
-            <div key={it.view} className={cx("nav-item", view === it.view && currentProject === "all" && "active")} onClick={() => nav(it.view, { project: "all", module: null })}>
+            <div key={it.view} className={cx("nav-item", view === it.view && "active")} onClick={() => nav(it.view, { project: currentProject, module: null })}>
               <Icon name={it.icon} /><span>{it.label}</span>
             </div>
           ))}
@@ -248,7 +248,7 @@ export function Sidebar({ view, currentProject, currentModule, nav, onCmdK, onNe
         <div className="nav-sec">
           <div className="nav-label">Tools</div>
           {toolItems.map(it => (
-            <div key={it.view} className={cx("nav-item", view === it.view && currentProject === "all" && "active")} onClick={() => nav(it.view, { project: "all", module: null })}>
+            <div key={it.view} className={cx("nav-item", view === it.view && "active")} onClick={() => nav(it.view, { project: currentProject, module: null })}>
               <Icon name={it.icon} /><span>{it.label}</span>
             </div>
           ))}

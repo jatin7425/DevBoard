@@ -1,5 +1,6 @@
 'use client'
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Icon } from '@/components/Icon'
 import {
   Empty,
@@ -18,17 +19,37 @@ import { useStoreFull, Store } from '@/lib/store'
 
 interface DocsViewProps {
   projectId: string;
+  pendingNewDoc?: boolean;
+  clearPending?: () => void;
 }
 
-export function DocsView({ projectId }: DocsViewProps) {
+export function DocsView({ projectId, pendingNewDoc, clearPending }: DocsViewProps) {
   const state = useStoreFull();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const docs = useMemo(() => state.docs
     .filter((d: any) => projectId === "all" || d.projectId === projectId)
     .sort((a: any, b: any) => b.updatedAt - a.updatedAt), [state.docs, projectId]);
-  const [selId, setSelId] = useState<string | null>(docs[0]?.id || null);
+
+  const urlDocId = searchParams.get('doc');
+  const doc = docs.find((d: any) => d.id === urlDocId) || docs[0];
+  const selId = doc?.id || null;
+
+  const setSelId = useCallback((id: string | null) => {
+    if (id === urlDocId) return;
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('doc', id);
+    } else {
+      params.delete('doc');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname, searchParams, urlDocId]);
+
   const [confirm, confirmNode] = useConfirm();
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const doc = docs.find((d: any) => d.id === selId) || docs[0];
 
   const [model, setModel] = useState("gemini");
   const [modelsList, setModelsList] = useState<string[]>(["gemini", "grok"]);
@@ -41,6 +62,13 @@ export function DocsView({ projectId }: DocsViewProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => {
     return new Set(state.projects.map((p: any) => p.id));
   });
+
+  useEffect(() => {
+    if (pendingNewDoc) {
+      create();
+      if (clearPending) clearPending();
+    }
+  }, [pendingNewDoc]);
 
   const toggleProject = (pid: string) => {
     setExpandedProjects(prev => {
