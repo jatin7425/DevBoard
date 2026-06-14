@@ -17,6 +17,7 @@ export function KanbanBoard({ moduleId }: { moduleId: string }) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [previewTask, setPreviewTask] = useState<Task | null>(null)
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>('TODO')
 
   const load = useCallback(async () => {
@@ -39,10 +40,12 @@ export function KanbanBoard({ moduleId }: { moduleId: string }) {
 
   const openCreate = (status: TaskStatus) => { setEditingTask(null); setDefaultStatus(status); setModalOpen(true) }
   const openEdit   = (task: Task) => { setEditingTask(task); setModalOpen(true) }
+  const openPreview = (task: Task) => setPreviewTask(task)
   const byStatus   = (s: TaskStatus) => tasks.filter(t => t.status === s).sort((a, b) => a.order - b.order)
 
   return (
     <>
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {COLUMNS.map(col => {
@@ -79,7 +82,7 @@ export function KanbanBoard({ moduleId }: { moduleId: string }) {
                         </button>
                       )}
                       {colTasks.map((task, idx) => (
-                        <TaskCard key={task.id} task={task} index={idx} onClick={openEdit} />
+                        <TaskCard key={task.id} task={task} index={idx} onClick={openPreview} />
                       ))}
                       {provided.placeholder}
                     </div>
@@ -90,6 +93,61 @@ export function KanbanBoard({ moduleId }: { moduleId: string }) {
           })}
         </div>
       </DragDropContext>
+      <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm hidden xl:block">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Task preview</p>
+              <p className="text-sm text-gray-500">Click a task to see details like Jira issue cards.</p>
+            </div>
+            <button onClick={() => openCreate('TODO')} className="rounded-full bg-indigo-600 text-white px-3 py-1 text-sm hover:bg-indigo-700 transition-colors">
+              Create
+            </button>
+          </div>
+          {previewTask ? (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-gray-100 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-gray-500">{previewTask.id.toUpperCase()}</p>
+                    <h3 className="mt-2 text-lg font-semibold text-gray-900">{previewTask.title}</h3>
+                    <p className="mt-2 text-sm text-gray-600">{previewTask.description || 'No description provided.'}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                      {previewTask.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-gray-100 p-4 bg-white">
+                  <p className="text-xs text-gray-500 uppercase tracking-[0.24em]">Priority</p>
+                  <p className="mt-2 font-semibold text-gray-900">{previewTask.priority}</p>
+                </div>
+                <div className="rounded-2xl border border-gray-100 p-4 bg-white">
+                  <p className="text-xs text-gray-500 uppercase tracking-[0.24em]">Updated</p>
+                  <p className="mt-2 font-semibold text-gray-900">{new Date(previewTask.updated_at).toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-gray-100 p-4 bg-white">
+                <p className="text-xs text-gray-500 uppercase tracking-[0.24em]">Tags</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {previewTask.tags.length > 0 ? previewTask.tags.map(tag => (
+                    <span key={tag} className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">{tag}</span>
+                  )) : <span className="text-sm text-gray-400">No tags</span>}
+                </div>
+              </div>
+              <button onClick={() => openEdit(previewTask)} className="w-full rounded-full bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors">
+                Edit task
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+              Select a task to preview details.
+            </div>
+          )}
+        </div>
+      </div>
 
       <TaskModal open={modalOpen} onClose={() => setModalOpen(false)} moduleId={moduleId} task={editingTask} onSaved={load} />
     </>

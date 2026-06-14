@@ -18,6 +18,11 @@ export function TaskCard({ task, index, onClick }: { task: Task; index: number; 
           <p className="text-sm font-medium text-gray-900 mb-3 leading-snug group-hover:text-indigo-700 transition-colors">
             {task.title}
           </p>
+          {task.description ? (
+            <p className="text-xs text-gray-500 leading-normal mb-3 overflow-hidden text-ellipsis line-clamp-2">
+              {task.description}
+            </p>
+          ) : null}
           <div className="flex items-center justify-between gap-2">
             <PriorityBadge priority={task.priority} />
             {task.tags.length > 0 && (
@@ -29,6 +34,10 @@ export function TaskCard({ task, index, onClick }: { task: Task; index: number; 
                 ))}
               </div>
             )}
+          </div>
+          <div className="mt-3 flex items-center justify-between text-[11px] text-gray-400">
+            <span>{task.id.toUpperCase()}</span>
+            <span>{new Date(task.updated_at).toLocaleDateString()}</span>
           </div>
         </div>
       )}
